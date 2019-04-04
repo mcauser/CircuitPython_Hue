@@ -47,10 +47,12 @@ class Hue:
     """
     HTTP Interface for interacting with a Philips Hue Bridge.
     """
-    def __init__(self, bridge_ip, wifi_manager):
+    def __init__(self, bridge_ip, app_id, app_name='circuitpython_hue', wifi_manager):
         """
         Creates an instance of the Hue Interface.
         :param str bridge_ip: Static IP Address of the Hue Bridge.
+        :param str app_id: Unique Application Identifier
+        :param str app_name: Application Name, defaults to circuitpython_hue
         :param wifi_manager wifi_manager: WiFiManager from ESPSPI_WiFiManager/ESPAT_WiFiManager
         """
         wifi_type = str(type(wifi_manager))
@@ -62,11 +64,14 @@ class Hue:
         self._user = philips_username
         # set up hue web address path
         self._web_address = bridge_ip+'/api'
+        # set up hue username address path
+        self._username = create_username(app_name, app_id)
+        self._username = self._web_address+self._username
     
-    def create_username(self, app_name='circuitpython_hue', app_id):
+    def create_username(self, app_name, app_id):
         """Creates and saves an unique, randomly-generated Hue username.
-        :param str app_name: Application Name, defaults to circuitpython_hue
-        :param str app_id: Application Identifier
+        :param str app_name: Application Name.
+        :param str app_id: Application Identifier.
         """
         data = {"devicetype":"{0}#{1}".format(app_name, app_id)}
         # TODO: Request the web address
