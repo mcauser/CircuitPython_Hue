@@ -25,29 +25,53 @@
 
 CircuitPython helper library for the Philips Hue
 
-
 * Author(s): Brent Rubell
 
 Implementation Notes
 --------------------
-
-**Hardware:**
-
-.. todo:: Add links to any specific hardware product page(s), or category page(s). Use unordered list & hyperlink rST
-   inline format: "* `Link Text <url>`_"
 
 **Software and Dependencies:**
 
 * Adafruit CircuitPython firmware for the supported boards:
   https://github.com/adafruit/circuitpython/releases
 
-.. todo:: Uncomment or remove the Bus Device and/or the Register library dependencies based on the library's use of either.
-
-# * Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
-# * Adafruit's Register library: https://github.com/adafruit/Adafruit_CircuitPython_Register
+* Adafruit ESP32SPI or ESP_ATcontrol library:
+    https://github.com/adafruit/Adafruit_CircuitPython_ESP32SPI
+    https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol
 """
-
-# imports
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Hue.git"
+
+class Hue:
+    """
+    HTTP Interface for interacting with a Philips Hue Bridge.
+    """
+    def __init__(self, bridge_ip, wifi_manager):
+        """
+        Creates an instance of the Hue Interface.
+        :param str bridge_ip: Static IP Address of the Hue Bridge.
+        :param wifi_manager wifi_manager: WiFiManager from ESPSPI_WiFiManager/ESPAT_WiFiManager
+        """
+        wifi_type = str(type(wifi_manager))
+        if ('ESPSPI_WiFiManager' in wifi_type or 'ESPAT_WiFiManager' in wifi_type):
+            self._wifi = wifi_manager
+        else:
+            raise TypeError("This library requires a WiFiManager object.")
+        self._ip = bridge_ip
+        self._user = philips_username
+        # set up hue web address path
+        self._web_address = bridge_ip+'/api'
+    
+    def create_username(self, app_name='circuitpython_hue', app_id):
+        """Creates and saves an unique, randomly-generated Hue username.
+        :param str app_name: Application Name, defaults to circuitpython_hue
+        :param str app_id: Application Identifier
+        """
+        data = {"devicetype":"{0}#{1}".format(app_name, app_id)}
+        # TODO: Request the web address
+        # if it retunrs a 101 http response code...
+        # throw an error to say press the button, then try again
+        
+        # parse JSON response for username
+        # and return the username
