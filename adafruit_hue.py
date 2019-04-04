@@ -43,16 +43,15 @@ Implementation Notes
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Hue.git"
 
-class Hue:
+class Bridge:
     """
     HTTP Interface for interacting with a Philips Hue Bridge.
     """
-    def __init__(self, bridge_ip, app_id, app_name='circuitpython_hue', wifi_manager):
+    def __init__(self, bridge_ip, username, wifi_manager):
         """
         Creates an instance of the Hue Interface.
         :param str bridge_ip: Static IP Address of the Hue Bridge.
-        :param str app_id: Unique Application Identifier
-        :param str app_name: Application Name, defaults to circuitpython_hue
+        :param str username: Optional unique username
         :param wifi_manager wifi_manager: WiFiManager from ESPSPI_WiFiManager/ESPAT_WiFiManager
         """
         wifi_type = str(type(wifi_manager))
@@ -65,18 +64,56 @@ class Hue:
         # set up hue web address path
         self._web_address = bridge_ip+'/api'
         # set up hue username address path
-        self._username = create_username(app_name, app_id)
         self._username = self._web_address+self._username
-    
+
     def create_username(self, app_name, app_id):
-        """Creates and saves an unique, randomly-generated Hue username.
+        """Creates and returns an unique, randomly-generated Hue username.
         :param str app_name: Application Name.
         :param str app_id: Application Identifier.
         """
         data = {"devicetype":"{0}#{1}".format(app_name, app_id)}
-        # TODO: Request the web address
+        resp = self._post(self._web_address, data)
         # if it retunrs a 101 http response code...
-        # throw an error to say press the button, then try again
-        
-        # parse JSON response for username
-        # and return the username
+        if resp.status_code = 101:
+            raise ValueError('Press the link button and run this method again..')
+        for res in resp.json()['success']:
+            return res['username']
+
+    # HTTP Requests
+    def _post(self, path, data):
+        """POST data
+        :param str path: Formatted LIFX API URL
+        :param json data: JSON data to POST to the LIFX API.
+        """
+        response = self._wifi.post(
+            path,
+            json=data,
+            headers=self._auth_header
+        )
+        response = self._parse_resp(response)
+        return response
+
+    def _put(self, path, data):
+        """PUT data
+        :param str path: Formatted LIFX API URL
+        :param json data: JSON data to PUT to the LIFX API.
+        """
+        response = self._wifi.put(
+            path,
+            json=data,
+            headers=self._auth_header
+        )
+        response = self._parse_resp(response)
+        return response
+
+    def _get(self, path, data):
+        """GET data
+        :param str path: Formatted LIFX API URL
+        :param json data: JSON data to GET from the LIFX API.
+        """
+        response = self._wifi.get(
+            path,
+            json=data,
+            headers=self._auth_header
+        )
+        return response.json()
