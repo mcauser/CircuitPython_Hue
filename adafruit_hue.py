@@ -62,28 +62,46 @@ class Bridge:
         self._ip = bridge_ip
         self._user = philips_username
         # set up hue web address path
-        self._web_address = bridge_ip+'/api'
+        self._web_addr = bridge_ip+'/api'
         # set up hue username address path
-        self._username = self._web_address+self._username
+        self._username_addr = self._web_addr+self._username
 
-    def create_username(self, app_name, app_id):
+    def create_username(self, app_name='circuitpython_hue', app_id):
         """Creates and returns an unique, randomly-generated Hue username.
         :param str app_name: Application Name.
         :param str app_id: Application Identifier.
         """
         data = {"devicetype":"{0}#{1}".format(app_name, app_id)}
-        resp = self._post(self._web_address, data)
+        resp = self._post(self._web_addr, data)
         # if it retunrs a 101 http response code...
         if resp.status_code = 101:
             raise ValueError('Press the link button and run this method again..')
         for res in resp.json()['success']:
             return res['username']
 
+    def get_lights(self):
+        """Returns all the light resources available for a bridge.
+        """
+        resp = self.get(self._username_addr+'/lights')
+        return resp
+
+    def get_groups(self):
+        """Returns all the light groups available for a bridge.
+        """
+        resp = self.get(self._username_addr+'/groups')
+        return resp
+
+    def get_scenes(self):
+        """Returns all the light scenes available for a bridge.
+        """
+        resp = self.get(self._username_addr+'/groups')
+        return resp
+
     # HTTP Requests
     def _post(self, path, data):
         """POST data
-        :param str path: Formatted LIFX API URL
-        :param json data: JSON data to POST to the LIFX API.
+        :param str path: Formatted Hue API URL
+        :param json data: JSON data to POST to the Hue API.
         """
         response = self._wifi.post(
             path,
@@ -95,8 +113,8 @@ class Bridge:
 
     def _put(self, path, data):
         """PUT data
-        :param str path: Formatted LIFX API URL
-        :param json data: JSON data to PUT to the LIFX API.
+        :param str path: Formatted Hue API URL
+        :param json data: JSON data to PUT to the Hue API.
         """
         response = self._wifi.put(
             path,
@@ -108,8 +126,8 @@ class Bridge:
 
     def _get(self, path, data):
         """GET data
-        :param str path: Formatted LIFX API URL
-        :param json data: JSON data to GET from the LIFX API.
+        :param str path: Formatted Hue API URL
+        :param json data: JSON data to GET from the Hue API.
         """
         response = self._wifi.get(
             path,
