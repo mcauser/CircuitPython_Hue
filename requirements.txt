@@ -1,0 +1,2 @@
+Adafruit-Blinka
+ESP32SPI
