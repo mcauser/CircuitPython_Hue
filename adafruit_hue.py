@@ -88,24 +88,47 @@ class Bridge:
         """Removes a username form the whitelist of registered applications.
         :param str username: Username to remove.
         """
-        resp = self.DELETE(self._username_addr/+self._username)
+        resp = self._delete(self._username_addr/+self._username)
+        return resp
+
+    def show_light_info(self, light_number):
+        """Gets the attributes and state of a given light.
+        :param int light_number: Light identifier.
+        """
+        resp = self._get('{0}/lights/{1}'.format(self._username_addr, light_number))
+
+    def set_light_state(self, light_number, is_on=None, brightness=None, hue=None, saturation=None):
+        """Allows the user to turn the light on and off, modify the hue and saturation.
+        :param int light_number: Light identifier.
+        :param bool is_on: State of the light.
+        :param uint8 brightness: Brightness value to set the light to (1 - 254).
+        :param uint16 hue: Hue value to set the light to (0 - 65535).
+        :param uint8 sat: Saturation value of the light (0 - 254).
+        """
+        data = {'is_on':is_on,
+                'brightness':brightness,
+                'hue':hue,
+                'saturation':saturation
+        }
+        resp = self._put('{0}/lights/{1}'.format(self._username_addr, light_number), data)
 
     def get_lights(self):
         """Returns all the light resources available for a bridge.
         """
-        resp = self.get(self._username_addr+'/lights')
+        resp = self._get(self._username_addr+'/lights')
+        # TODO: Pretty-parse the JSON respones in ID/Name format
         return resp
 
     def get_groups(self):
         """Returns all the light groups available for a bridge.
         """
-        resp = self.get(self._username_addr+'/groups')
+        resp = self._get(self._username_addr+'/groups')
         return resp
 
     def get_scenes(self):
         """Returns all the light scenes available for a bridge.
         """
-        resp = self.get(self._username_addr+'/groups')
+        resp = self._get(self._username_addr+'/groups')
         return resp
 
     """
