@@ -61,15 +61,15 @@ class Bridge:
         else:
             raise TypeError("This library requires a WiFiManager object.")
         self._ip = bridge_ip
-        self._user = philips_username
+        self._username = philips_username
         # set up hue web address path
         self._web_addr = bridge_ip+'/api'
         # set up hue username address path
         self._username_addr = self._web_addr+self._username
 
-    def register_bridge(self, username):
-        """Registers Hue bridge for API calls.
-        :param str username: Unique alphanumeric username.
+    def register_application(self, username):
+        """Registers Hue application for use with your bridge.
+        :param str username: Unique alphanumeric username. Can not contain a space.
         """
         #data = {"devicetype":"{0}#{1}".format(username, client_id)}
         data = {"username":username,
@@ -77,10 +77,18 @@ class Bridge:
         }
         resp = self._post(self._web_addr, data)
         # if it returns a 101 http response code...
-        if resp.status_code = 101:
+        if resp.status_code == 101:
             raise ValueError('Press the link button on your bridge and run your code again...')
+        elif resp.status_code == 7:
+            raise ValueError('Username can not contain a space.')
         for res in resp.json()['success']:
             return res['username']
+
+    def deregister_application(self, username):
+        """Removes a username form the whitelist of registered applications.
+        :param str username: Username to remove.
+        """
+        resp = self.DELETE(self._username_addr/+self._username)
 
     def get_lights(self):
         """Returns all the light resources available for a bridge.
@@ -100,10 +108,10 @@ class Bridge:
         resp = self.get(self._username_addr+'/groups')
         return resp
 
-    def 
-
-
-    # HTTP Requests
+    """
+    HTTP Request and Response Helpers
+    """
+    # TODO: Add response parsing (_parse_resp) method....
     def _post(self, path, data):
         """POST data
         :param str path: Formatted Hue API URL
@@ -114,7 +122,6 @@ class Bridge:
             json=data,
             headers=self._auth_header
         )
-        response = self._parse_resp(response)
         return response
 
     def _put(self, path, data):
@@ -127,7 +134,6 @@ class Bridge:
             json=data,
             headers=self._auth_header
         )
-        response = self._parse_resp(response)
         return response
 
     def _get(self, path, data):
@@ -140,4 +146,13 @@ class Bridge:
             json=data,
             headers=self._auth_header
         )
-        return response.json()
+        return response
+
+    def _delete(self, path):
+        """DELETE data
+        :param str path: Formatted Hue API URL
+        """
+        response = self.wifi.delete(
+            path,
+            headers=self._create_headers(self._auth_header))
+        return response
