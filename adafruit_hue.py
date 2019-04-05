@@ -88,7 +88,7 @@ class Bridge:
         """Removes a username form the whitelist of registered applications.
         :param str username: Username to remove.
         """
-        resp = self._delete(self._username_addr/+self._username)
+        resp = self._delete(self._username_addr+self._username)
         return resp
 
     def show_light_info(self, light_number):
