@@ -39,6 +39,7 @@ Implementation Notes
     https://github.com/adafruit/Adafruit_CircuitPython_ESP32SPI
     https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol
 """
+from random import randint
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Hue.git"
@@ -66,16 +67,16 @@ class Bridge:
         # set up hue username address path
         self._username_addr = self._web_addr+self._username
 
-    def create_username(self, app_name='circuitpython_hue', app_id):
-        """Creates and returns an unique, randomly-generated Hue username.
-        :param str app_name: Application Name.
-        :param str app_id: Application Identifier.
+    def create_username(self):
+        """Creates and returns an unique, randomly-generated Hue username
+        for the Hue bridge.
         """
-        data = {"devicetype":"{0}#{1}".format(app_name, app_id)}
+        client_id = randomint(0, 500)
+        data = {"devicetype":"{0}#{1}".format("circuitpython_hue", client_id)}
         resp = self._post(self._web_addr, data)
-        # if it retunrs a 101 http response code...
+        # if it returns a 101 http response code...
         if resp.status_code = 101:
-            raise ValueError('Press the link button and run this method again..')
+            raise ValueError('Press the link button on your bridge and run your code again...')
         for res in resp.json()['success']:
             return res['username']
 
