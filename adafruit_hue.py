@@ -67,12 +67,14 @@ class Bridge:
         # set up hue username address path
         self._username_addr = self._web_addr+self._username
 
-    def create_username(self):
-        """Creates and returns an unique, randomly-generated Hue username
-        for the Hue bridge.
+    def register_bridge(self, username):
+        """Registers Hue bridge for API calls.
+        :param str username: Unique alphanumeric username.
         """
-        client_id = randomint(0, 500)
-        data = {"devicetype":"{0}#{1}".format("circuitpython_hue", client_id)}
+        #data = {"devicetype":"{0}#{1}".format(username, client_id)}
+        data = {"username":username,
+                "devicetype":"CircuitPython Hue Client"
+        }
         resp = self._post(self._web_addr, data)
         # if it returns a 101 http response code...
         if resp.status_code = 101:
@@ -97,6 +99,9 @@ class Bridge:
         """
         resp = self.get(self._username_addr+'/groups')
         return resp
+
+    def 
+
 
     # HTTP Requests
     def _post(self, path, data):
