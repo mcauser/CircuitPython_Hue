@@ -89,13 +89,18 @@ class Bridge:
         :param str username: Username to remove.
         """
         resp = self._delete(self._username_addr+self._username)
-        return resp
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     def show_light_info(self, light_number):
         """Gets the attributes and state of a given light.
         :param int light_number: Light identifier.
         """
         resp = self._get('{0}/lights/{1}'.format(self._username_addr, light_number))
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     def set_light_state(self, light_number, is_on=None, brightness=None, hue=None, saturation=None):
         """Allows the user to turn the light on and off, modify the hue and saturation.
@@ -111,30 +116,73 @@ class Bridge:
                 'saturation':saturation
         }
         resp = self._put('{0}/lights/{1}'.format(self._username_addr, light_number), data)
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
+
+    def search_new_lights(self):
+        """Starts searching for new lights on the network bridge
+        """
+        resp = self._post('{0}/lights'.format(self._username_addr))
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
+
+    def get_new_lights(self):
+        """Gets a list of all lights which were discovered the 
+        """
+        resp = self._post(self._username_addr+'lights/new')
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
+
+
+    def get_light(self, light_id):
+        """Gets the attributes and state of a provided light.
+        :param int light_id: Light identifier.
+        """
+        resp = self._get('{0}/lights/{1}'.format(self._username_addr, light_id))
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     def get_lights(self):
         """Returns all the light resources available for a bridge.
         """
         resp = self._get(self._username_addr+'/lights')
         # TODO: Pretty-parse the JSON respones in ID/Name format
-        return resp
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     def get_groups(self):
         """Returns all the light groups available for a bridge.
         """
         resp = self._get(self._username_addr+'/groups')
-        return resp
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     def get_scenes(self):
         """Returns all the light scenes available for a bridge.
         """
         resp = self._get(self._username_addr+'/groups')
-        return resp
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     """
     HTTP Request and Response Helpers
     """
     # TODO: Add response parsing (_parse_resp) method....
+
+    def _parase_response(self, response):
+        """Parses JSON response from the Hue API
+        """
+        if response.json() == "success":
+            return response
+        # TODO: raise an error
+
     def _post(self, path, data):
         """POST data
         :param str path: Formatted Hue API URL
