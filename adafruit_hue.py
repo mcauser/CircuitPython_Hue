@@ -93,6 +93,7 @@ class Bridge:
         resp.close()
         return resp_json
 
+    # Lights API
     def show_light_info(self, light_number):
         """Gets the attributes and state of a given light.
         :param int light_number: Light identifier.
@@ -136,7 +137,6 @@ class Bridge:
         resp.close()
         return resp_json
 
-
     def get_light(self, light_id):
         """Gets the attributes and state of a provided light.
         :param int light_id: Light identifier.
@@ -151,6 +151,47 @@ class Bridge:
         """
         resp = self._get(self._username_addr+'/lights')
         # TODO: Pretty-parse the JSON respones in ID/Name format
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
+
+    # Groups API
+    def create_group(self, lights, group_name):
+        """Creates a new group containing the lights specified and optional name.
+        :param list lights: List of light identifiers.
+        :param str group_name: Optional group name.
+        """
+        data = {'lights':lights,
+                'name':group_name,
+                'type':lightGroup
+        }
+        resp = self._post(self._username_addr+'/groups', data)
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
+
+    def set_group(self, group_id, is_on, bri, hue, sat):
+        """Modifies the state of all lights in a group.
+        :param int group_id: Group identifier.
+        :param bool is_on: On/Off state of the light.
+        :param int bri: Brightness (0 to 254).
+        :param int hue: Hue (0 to 65535).
+        :param int sat: Saturation of the light (0 to 254).
+        """
+        data = {'on':is_on,
+                'hue':hue,
+                'sat':sat}
+        resp = self._put(self._username_addr+'/groups/'+group_id+'/action', data)
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
+
+    def set_scene(self, group_id, scene):
+        """Sets a group scene.
+        :param str scene: The scene identifier
+        """
+        data = {'scene':scene}
+        resp = self._put(self._username_addr+'/groups/'+group_id+'/action', data)
         resp_json = resp.json()
         resp.close()
         return resp_json
