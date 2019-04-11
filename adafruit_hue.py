@@ -113,9 +113,7 @@ class Bridge:
         :param int light_id: Light identifier.
         """
         resp = self._get('{0}/lights/{1}'.format(self._username_url, light_id))
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     def set_light(self, light_id, **kwargs):
         """Allows the user to turn the light on and off, modify the hue and effects.
@@ -129,26 +127,20 @@ class Bridge:
         hue-api/lights-api/#set-light-state)
         """
         resp = self._put('{0}/lights/{1}/state'.format(self._username_url, light_id), kwargs)
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     def get_light(self, light_id):
         """Gets the attributes and state of a provided light.
         :param int light_id: Light identifier.
         """
         resp = self._get('{0}/lights/{1}'.format(self._username_url, light_id))
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     def get_lights(self):
         """Returns all the light resources available for a bridge.
         """
         resp = self._get(self._username_url+'/lights')
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     # Groups API
     def create_group(self, lights, group_id):
@@ -161,9 +153,7 @@ class Bridge:
                 'type':group_id
                 }
         resp = self._post(self._username_url+'/groups', data)
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     def set_group(self, group_id, **kwargs):
         """Allows the user to turn the light on and off, modify the hue and effects.
@@ -178,17 +168,13 @@ class Bridge:
         """
         print(kwargs)
         resp = self._put('{0}/groups/{1}/action'.format(self._username_url, group_id), kwargs)
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     def get_groups(self):
         """Returns all the light groups available for a bridge.
         """
         resp = self._get(self._username_url+'/groups')
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     # Scene API
     def set_scene(self, group_id, scene_id):
@@ -212,30 +198,36 @@ class Bridge:
         :param str path: Formatted Hue API URL
         :param json data: JSON data to POST to the Hue API.
         """
-        response = self._wifi.post(
+        resp = self._wifi.post(
             path,
             json=data
         )
-        return response
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     def _put(self, path, data):
         """PUT data
         :param str path: Formatted Hue API URL
         :param json data: JSON data to PUT to the Hue API.
         """
-        response = self._wifi.put(
+        resp = self._wifi.put(
             path,
             json=data
         )
-        return response
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
 
     def _get(self, path, data=None):
         """GET data
         :param str path: Formatted Hue API URL
         :param json data: JSON data to GET from the Hue API.
         """
-        response = self._wifi.get(
+        resp = self._wifi.get(
             path,
             json=data
         )
-        return response
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
