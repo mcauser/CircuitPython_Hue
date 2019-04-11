@@ -51,7 +51,7 @@ class Bridge:
     """
     def __init__(self, wifi_manager, bridge_ip=None, username=None):
         """
-        Creates an instance of the Hue Interface.
+        Creates an instance of the Philips Hue Bridge Interface.
         :param wifi_manager wifi_manager: WiFiManager from ESPSPI_WiFiManager/ESPAT_WiFiManager
         """
         wifi_type = str(type(wifi_manager))
@@ -74,13 +74,14 @@ class Bridge:
         Returns the bridge's IP address.
         """
         try:
-            response = self._wifi.get('https://discovery.meethue.com')
-            json_data = response.json()
+            resp = self._wifi.get('https://discovery.meethue.com')
+            json_data = resp.json()
             bridge_ip = json_data[0]['internalipaddress']
+            resp.close()
         except:
             raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
         self._ip = bridge_ip
-        # set up hue web address path
+        # set up hue bridge address path
         self.bridge_url = 'http://{}/api'.format(self._ip)
         return self._ip
 
@@ -102,24 +103,29 @@ class Bridge:
                 self._username_url = self._bridge_url+'/'+ username
             connection_attempts-=1
             time.sleep(1)
+        resp.close()
         return username
 
     # Lights API
-    def show_light_info(self, light_number):
+    def show_light_info(self, light_id):
         """Gets the attributes and state of a given light.
-        :param int light_number: Light identifier.
+        :param int light_id: Light identifier.
         """
-        resp = self._get('{0}/lights/{1}'.format(self._username_url, light_number))
+        resp = self._get('{0}/lights/{1}'.format(self._username_url, light_id))
         resp_json = resp.json()
         resp.close()
         return resp_json
 
-    def set_light(self, light_number, **kwargs):
+    def set_light(self, light_id, **kwargs):
         """Allows the user to turn the light on and off, modify the hue and effects.
-        You can pass the following as kwargs into this method:
-        :param 
+        You can pass the following as valid kwargs into this method:
+        :param bool on: On/Off state of the light
+        :param int bri: Brightness value of the light (1 to 254)
+        :param int hue: Hue value to set the light to (0 to 65535)
+        :param int sat: Saturation of the light (0 to 254)
+        (more settings at https://developers.meethue.com/develop/hue-api/lights-api/#set-light-state)
         """
-        resp = self._put('{0}/lights/{1}/state'.format(self._username_url, light_number), kwargs)
+        resp = self._put('{0}/lights/{1}/state'.format(self._username_url, light_id), kwargs)
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -156,28 +162,17 @@ class Bridge:
         resp.close()
         return resp_json
 
-    def set_group(self, group_id, is_on, bri, hue, sat):
-        """Modifies the state of all lights in a group.
+    def set_group(self, group_id, **kwargs):
+        """Allows the user to turn the light on and off, modify the hue and effects.
         :param int group_id: Group identifier.
-        :param bool is_on: On/Off state of the light.
-        :param int bri: Brightness (0 to 254).
-        :param int hue: Hue (0 to 65535).
-        :param int sat: Saturation of the light (0 to 254).
+        You can pass the following as (optional) valid kwargs into this method:
+        :param bool on: On/Off state of the light
+        :param int bri: Brightness value of the light (1 to 254)
+        :param int hue: Hue value to set the light to (0 to 65535)
+        :param int sat: Saturation of the light (0 to 254)
+        (more settings at https://developers.meethue.com/develop/hue-api/lights-api/#set-light-state)
         """
-        data = {'on':is_on,
-                'hue':hue,
-                'sat':sat}
-        resp = self._put(self._username_url+'/groups/'+group_id+'/action', data)
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
-
-    def set_scene(self, group_id, scene):
-        """Sets a group scene.
-        :param str scene: The scene identifier
-        """
-        data = {'scene':scene}
-        resp = self._put(self._username_url+'/groups/'+group_id+'/action', data)
+        resp = self._put('{0}/groups/{1}/action'.format(self._username_url, group_id), kwargs)
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -189,6 +184,18 @@ class Bridge:
         resp_json = resp.json()
         resp.close()
         return resp_json
+
+    # Scene API
+    def set_scene(self, group_id, scene):
+        """Sets a group scene.
+        :param str scene: The scene identifier
+        """
+        data = {'scene':scene}
+        resp = self._put(self._username_url+'/groups/'+group_id+'/action', data)
+        resp_json = resp.json()
+        resp.close()
+        return resp_json
+
 
     def get_scenes(self):
         """Returns all the light scenes available for a bridge.
