@@ -148,13 +148,13 @@ class Bridge:
         return resp_json
 
     # Groups API
-    def create_group(self, lights, group_name):
+    def create_group(self, lights, group_id):
         """Creates a new group containing the lights specified and optional name.
         :param list lights: List of light identifiers.
-        :param str group_name: Optional group name.
+        :param str group_id: Optional group name.
         """
         data = {'lights':lights,
-                'name':group_name,
+                'name':group_id,
                 'type':lightGroup
         }
         resp = self._post(self._username_url+'/groups', data)
@@ -172,6 +172,7 @@ class Bridge:
         :param int sat: Saturation of the light (0 to 254)
         (more settings at https://developers.meethue.com/develop/hue-api/lights-api/#set-light-state)
         """
+        print(kwargs)
         resp = self._put('{0}/groups/{1}/action'.format(self._username_url, group_id), kwargs)
         resp_json = resp.json()
         resp.close()
@@ -186,37 +187,22 @@ class Bridge:
         return resp_json
 
     # Scene API
-    def set_scene(self, group_id, scene):
+    def set_scene(self, group_id, scene_id):
         """Sets a group scene.
         :param str scene: The scene identifier
         """
-        data = {'scene':scene}
-        resp = self._put(self._username_url+'/groups/'+group_id+'/action', data)
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
-
+        # To recall an existing scene, use the Groups API.
+        self.set_group(group_id, scene=scene_id)
 
     def get_scenes(self):
-        """Returns all the light scenes available for a bridge.
+        """Returns a list of all scenes currently stored in the bridge. 
         """
-        resp = self._get(self._username_url+'/groups')
+        resp = self._get(self._username_url+'/scenes')
         resp_json = resp.json()
         resp.close()
         return resp_json
 
-    """
-    HTTP Request and Response Helpers for the Hue API
-    """
-    # TODO: Add response parsing (_parse_resp) method....
-
-    def _parase_response(self, response):
-        """Parses JSON response from the Hue API
-        """
-        if response.json() == "success":
-            return response
-        # TODO: raise an error
-
+    # HTTP Helpers for the Hue API
     def _post(self, path, data):
         """POST data
         :param str path: Formatted Hue API URL
@@ -247,14 +233,5 @@ class Bridge:
         response = self._wifi.get(
             path,
             json=data
-        )
-        return response
-
-    def _delete(self, path):
-        """DELETE data
-        :param str path: Formatted Hue API URL
-        """
-        response = self.wifi.delete(
-            path
         )
         return response
