@@ -69,6 +69,7 @@ class Bridge:
                                  \n\t"bridge_ip":"{0}", \
                                  \n\t"username":"{1}"'.format(self._bridge_ip, self._username))
 
+    # Hue Core API
     def discover_bridge(self):
         """Discovers Philips Hue Bridge IP from the hosted broker discovery service.
         Returns the bridge's IP address.
@@ -166,7 +167,6 @@ class Bridge:
         (more settings at https://developers.meethue.com/develop/hue-api/
         lights-api/#set-light-state)
         """
-        print(kwargs)
         resp = self._put('{0}/groups/{1}/action'.format(self._username_url, group_id), kwargs)
         return resp
 
@@ -188,9 +188,7 @@ class Bridge:
         """Returns a list of all scenes currently stored in the bridge.
         """
         resp = self._get(self._username_url+'/scenes')
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
+        return resp
 
     # HTTP Helpers for the Hue API
     def _post(self, path, data):
