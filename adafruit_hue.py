@@ -79,7 +79,8 @@ class Bridge:
             bridge_ip = json_data[0]['internalipaddress']
             resp.close()
         except:
-            raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
+            raise TypeError('Ensure the Philips Bridge and CircuitPython device\
+                             are both on the same WiFi network.')
         self._ip = bridge_ip
         # set up hue bridge address path
         self.bridge_url = 'http://{}/api'.format(self._ip)
@@ -91,17 +92,17 @@ class Bridge:
         Returns username or None.
         """
         self._bridge_url = 'http://{}/api'.format(self._bridge_ip)
-        data = {"devicetype":"CircuitPython#pyportal{0}".format(randint(0,100))}
-        resp = self._wifi.post(self._bridge_url,json=data)
+        data = {"devicetype":"CircuitPython#pyportal{0}".format(randint(0, 100))}
+        resp = self._wifi.post(self._bridge_url, json=data)
         connection_attempts = 30
         username = None
-        while username == None and connection_attempts > 0:
+        while username is None and connection_attempts > 0:
             resp = self._wifi.post(self._bridge_url, json=data)
             json = resp.json()[0]
             if json.get('success'):
                 username = str(json['success']['username'])
                 self._username_url = self._bridge_url+'/'+ username
-            connection_attempts-=1
+            connection_attempts -= 1
             time.sleep(1)
         resp.close()
         return username
@@ -123,7 +124,9 @@ class Bridge:
         :param int bri: Brightness value of the light (1 to 254)
         :param int hue: Hue value to set the light to (0 to 65535)
         :param int sat: Saturation of the light (0 to 254)
-        (more settings at https://developers.meethue.com/develop/hue-api/lights-api/#set-light-state)
+        (more settings at:
+        https://developers.meethue.com/develop/
+        hue-api/lights-api/#set-light-state)
         """
         resp = self._put('{0}/lights/{1}/state'.format(self._username_url, light_id), kwargs)
         resp_json = resp.json()
@@ -155,8 +158,8 @@ class Bridge:
         """
         data = {'lights':lights,
                 'name':group_id,
-                'type':lightGroup
-        }
+                'type':group_id
+                }
         resp = self._post(self._username_url+'/groups', data)
         resp_json = resp.json()
         resp.close()
@@ -170,7 +173,8 @@ class Bridge:
         :param int bri: Brightness value of the light (1 to 254)
         :param int hue: Hue value to set the light to (0 to 65535)
         :param int sat: Saturation of the light (0 to 254)
-        (more settings at https://developers.meethue.com/develop/hue-api/lights-api/#set-light-state)
+        (more settings at https://developers.meethue.com/develop/hue-api/
+        lights-api/#set-light-state)
         """
         print(kwargs)
         resp = self._put('{0}/groups/{1}/action'.format(self._username_url, group_id), kwargs)
@@ -195,7 +199,7 @@ class Bridge:
         self.set_group(group_id, scene=scene_id)
 
     def get_scenes(self):
-        """Returns a list of all scenes currently stored in the bridge. 
+        """Returns a list of all scenes currently stored in the bridge.
         """
         resp = self._get(self._username_url+'/scenes')
         resp_json = resp.json()
