@@ -39,6 +39,7 @@ Implementation Notes
     https://github.com/adafruit/Adafruit_CircuitPython_ESP32SPI
     https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol
 """
+import time
 from random import randint
 
 __version__ = "0.0.0-auto.0"
@@ -68,43 +69,28 @@ class Bridge:
                 bridge_ip = json_data[0]['internalipaddress']
             except:
                 raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
-        self._ip = str(bridge_ip)
+        self._ip = bridge_ip
         self.username = username
         # set up hue web address path
-        self._web_addr = bridge_ip+'/api'
-        # set up hue username address path
-        self._username_addr = self._web_addr+'/'+self.username
-        print(self._username_addr)
-        print(self._web_addr)
-        # Testing
-        url = 'http://{}/api'.format(bridge_ip)
-        print('test: ', url)
-        data = '{"devicetype":"TapLight#mydevice"}'
-        response = self._wifi.get(url+'/newdeveloper')
-        print(response.json())
+        self.bridge_url = 'http://{}/api'.format(self._ip)
 
-
-    def register_application(self, username):
-        """Registers Hue application for use with your bridge.
-        :param str username: Unique alphanumeric username. Can not contain a space.
+    def register_username(self):
+        """Registers Hue username for use with your bridge. Provides a 30 second
+        delay to press the link button.
+        Returns username or None
         """
-        response = self._wifi.get(self._web_addr+'/newdeveloper')
-        print(response.json())
-
-        data = {"devicetype": "CircuitPython#pyportal"}
-        import json
-        data = json.dumps(data)
-        print('data:', data)
-        resp = self._wifi.get('http://192.168.1.21/api', json=data)
-        print(resp.status_code)
-        print(resp.text)
-        # if it returns a 101 http response code...
-        if resp.status_code == 101:
-            raise ValueError('Press the link button on your bridge and run your code again...')
-        elif resp.status_code == 7:
-            raise ValueError('Username can not contain a space.')
-        for res in resp.json()['success']:
-            return res['username']
+        data = {"devicetype":"CircuitPython#pyportal{0}".format(randint(0,100))}
+        resp = self._wifi.post(self.bridge_url, json=data)
+        username = None
+        connection_attempts = 30
+        while username == None and connection_attempts > 0:
+            resp = self._wifi.post(self.bridge_url, json=data)
+            json = resp.json()[0]
+            if json.get('success'):
+                username = str(json['success']['username'])
+            connection_attempts-=1
+            time.sleep(1)
+        return username
 
     def deregister_application(self, username):
         """Removes a username form the whitelist of registered applications.
