@@ -49,10 +49,9 @@ class Bridge:
     """
     HTTP Interface for interacting with a Philips Hue Bridge.
     """
-    def __init__(self, username, wifi_manager, bridge_ip=None):
+    def __init__(self, wifi_manager, bridge_ip=None):
         """
         Creates an instance of the Hue Interface.
-        :param str username: Optional unique username
         :param str bridge_ip: Optional Static IP Address of the Hue Bridge.
         :param wifi_manager wifi_manager: WiFiManager from ESPSPI_WiFiManager/ESPAT_WiFiManager
         """
@@ -70,43 +69,36 @@ class Bridge:
             except:
                 raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
         self._ip = bridge_ip
-        self.username = username
         # set up hue web address path
         self.bridge_url = 'http://{}/api'.format(self._ip)
 
-    def register_username(self):
-        """Registers Hue username for use with your bridge. Provides a 30 second
-        delay to press the link button.
-        Returns username or None
+    def register_username(self, username=None):
+        """Attempts to register Hue application username for use with your bridge.
+        Provides a 30 second delay to press the link button on the bridge.
+        Returns username or None.
+        :param str username: Unique application username, leave kwarg as None to generate.
         """
+        if username is not None:
+            self._username_url = self.bridge_url+'/'+ username
         data = {"devicetype":"CircuitPython#pyportal{0}".format(randint(0,100))}
-        resp = self._wifi.post(self.bridge_url, json=data)
-        username = None
+        resp = self._wifi.post(self.bridge_url,json=data)
         connection_attempts = 30
         while username == None and connection_attempts > 0:
             resp = self._wifi.post(self.bridge_url, json=data)
             json = resp.json()[0]
             if json.get('success'):
                 username = str(json['success']['username'])
+                self._username_url = self.bridge_url+'/'+ username
             connection_attempts-=1
             time.sleep(1)
         return username
-
-    def deregister_application(self, username):
-        """Removes a username form the whitelist of registered applications.
-        :param str username: Username to remove.
-        """
-        resp = self._delete(self._username_addr+self._username)
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
 
     # Lights API
     def show_light_info(self, light_number):
         """Gets the attributes and state of a given light.
         :param int light_number: Light identifier.
         """
-        resp = self._get('{0}/lights/{1}'.format(self._username_addr, light_number))
+        resp = self._get('{0}/lights/{1}'.format(self._username_url, light_number))
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -124,7 +116,7 @@ class Bridge:
                 'hue':hue,
                 'saturation':saturation
         }
-        resp = self._put('{0}/lights/{1}'.format(self._username_addr, light_number), data)
+        resp = self._put('{0}/lights/{1}'.format(self._username_url, light_number), data)
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -132,7 +124,7 @@ class Bridge:
     def search_new_lights(self):
         """Starts searching for new lights on the network bridge
         """
-        resp = self._post('{0}/lights'.format(self._username_addr))
+        resp = self._post('{0}/lights'.format(self._username_url))
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -140,7 +132,7 @@ class Bridge:
     def get_new_lights(self):
         """Gets a list of all lights which were discovered the 
         """
-        resp = self._post(self._username_addr+'lights/new')
+        resp = self._post(self._username_url+'lights/new')
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -149,7 +141,7 @@ class Bridge:
         """Gets the attributes and state of a provided light.
         :param int light_id: Light identifier.
         """
-        resp = self._get('{0}/lights/{1}'.format(self._username_addr, light_id))
+        resp = self._get('{0}/lights/{1}'.format(self._username_url, light_id))
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -157,7 +149,7 @@ class Bridge:
     def get_lights(self):
         """Returns all the light resources available for a bridge.
         """
-        resp = self._get(self._username_addr+'/lights')
+        resp = self._get(self._username_url+'/lights')
         # TODO: Pretty-parse the JSON respones in ID/Name format
         resp_json = resp.json()
         resp.close()
@@ -173,7 +165,7 @@ class Bridge:
                 'name':group_name,
                 'type':lightGroup
         }
-        resp = self._post(self._username_addr+'/groups', data)
+        resp = self._post(self._username_url+'/groups', data)
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -189,7 +181,7 @@ class Bridge:
         data = {'on':is_on,
                 'hue':hue,
                 'sat':sat}
-        resp = self._put(self._username_addr+'/groups/'+group_id+'/action', data)
+        resp = self._put(self._username_url+'/groups/'+group_id+'/action', data)
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -199,7 +191,7 @@ class Bridge:
         :param str scene: The scene identifier
         """
         data = {'scene':scene}
-        resp = self._put(self._username_addr+'/groups/'+group_id+'/action', data)
+        resp = self._put(self._username_url+'/groups/'+group_id+'/action', data)
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -207,7 +199,7 @@ class Bridge:
     def get_groups(self):
         """Returns all the light groups available for a bridge.
         """
-        resp = self._get(self._username_addr+'/groups')
+        resp = self._get(self._username_url+'/groups')
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -215,7 +207,7 @@ class Bridge:
     def get_scenes(self):
         """Returns all the light scenes available for a bridge.
         """
-        resp = self._get(self._username_addr+'/groups')
+        resp = self._get(self._username_url+'/groups')
         resp_json = resp.json()
         resp.close()
         return resp_json
