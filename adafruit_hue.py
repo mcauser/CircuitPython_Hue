@@ -103,36 +103,12 @@ class Bridge:
         resp.close()
         return resp_json
 
-    def set_light_state(self, light_number, is_on=None, brightness=None, hue=None, saturation=None):
-        """Allows the user to turn the light on and off, modify the hue and saturation.
-        :param int light_number: Light identifier.
-        :param bool is_on: State of the light.
-        :param uint8 brightness: Brightness value to set the light to (1 - 254).
-        :param uint16 hue: Hue value to set the light to (0 - 65535).
-        :param uint8 sat: Saturation value of the light (0 - 254).
+    def set_light(self, light_number, **kwargs):
+        """Allows the user to turn the light on and off, modify the hue and effects.
+        You can pass the following as kwargs into this method:
+        :param 
         """
-        data = {'is_on':is_on,
-                'brightness':brightness,
-                'hue':hue,
-                'saturation':saturation
-        }
-        resp = self._put('{0}/lights/{1}'.format(self._username_url, light_number), data)
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
-
-    def search_new_lights(self):
-        """Starts searching for new lights on the network bridge
-        """
-        resp = self._post('{0}/lights'.format(self._username_url))
-        resp_json = resp.json()
-        resp.close()
-        return resp_json
-
-    def get_new_lights(self):
-        """Gets a list of all lights which were discovered the 
-        """
-        resp = self._post(self._username_url+'lights/new')
+        resp = self._put('{0}/lights/{1}/state'.format(self._username_url, light_number), kwargs)
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -150,7 +126,6 @@ class Bridge:
         """Returns all the light resources available for a bridge.
         """
         resp = self._get(self._username_url+'/lights')
-        # TODO: Pretty-parse the JSON respones in ID/Name format
         resp_json = resp.json()
         resp.close()
         return resp_json
@@ -231,8 +206,7 @@ class Bridge:
         """
         response = self._wifi.post(
             path,
-            json=data,
-            headers=self._auth_header
+            json=data
         )
         return response
 
@@ -243,8 +217,7 @@ class Bridge:
         """
         response = self._wifi.put(
             path,
-            json=data,
-            headers=self._auth_header
+            json=data
         )
         return response
 
@@ -255,8 +228,7 @@ class Bridge:
         """
         response = self._wifi.get(
             path,
-            json=data,
-            headers=self._auth_header
+            json=data
         )
         return response
 
@@ -265,6 +237,6 @@ class Bridge:
         :param str path: Formatted Hue API URL
         """
         response = self.wifi.delete(
-            path,
-            headers=self._create_headers(self._auth_header))
+            path
+        )
         return response
