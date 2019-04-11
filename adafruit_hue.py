@@ -48,11 +48,11 @@ class Bridge:
     """
     HTTP Interface for interacting with a Philips Hue Bridge.
     """
-    def __init__(self, bridge_ip, username, wifi_manager):
+    def __init__(self, username, wifi_manager, bridge_ip=None):
         """
         Creates an instance of the Hue Interface.
-        :param str bridge_ip: Static IP Address of the Hue Bridge.
         :param str username: Optional unique username
+        :param str bridge_ip: Optional Static IP Address of the Hue Bridge.
         :param wifi_manager wifi_manager: WiFiManager from ESPSPI_WiFiManager/ESPAT_WiFiManager
         """
         wifi_type = str(type(wifi_manager))
@@ -60,12 +60,22 @@ class Bridge:
             self._wifi = wifi_manager
         else:
             raise TypeError("This library requires a WiFiManager object.")
+        if bridge_ip is None:
+            # discover the bridge_ip if not provided
+            try:
+                response = self._wifi.get('https://discovery.meethue.com')
+                json_data = response.json()
+                bridge_ip = json_data[0]['internalipaddress']
+            except:
+                raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
         self._ip = bridge_ip
-        self._username = philips_username
+        self._username = username
         # set up hue web address path
         self._web_addr = bridge_ip+'/api'
         # set up hue username address path
-        self._username_addr = self._web_addr+self._username
+        self._username_addr = self._web_addr+'/'+self._username
+        print(self._username_addr)
+
 
     def register_application(self, username):
         """Registers Hue application for use with your bridge.
@@ -248,7 +258,7 @@ class Bridge:
         )
         return response
 
-    def _get(self, path, data):
+    def _get(self, path, data=None):
         """GET data
         :param str path: Formatted Hue API URL
         :param json data: JSON data to GET from the Hue API.
