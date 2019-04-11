@@ -1,2 +1,2 @@
 Adafruit-Blinka
-ESP32SPI
+Adafruit_CircuitPython_ESP32SPI
