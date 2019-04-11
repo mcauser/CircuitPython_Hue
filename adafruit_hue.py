@@ -49,10 +49,9 @@ class Bridge:
     """
     HTTP Interface for interacting with a Philips Hue Bridge.
     """
-    def __init__(self, wifi_manager, bridge_ip=None):
+    def __init__(self, wifi_manager, bridge_ip=None, username=None):
         """
         Creates an instance of the Hue Interface.
-        :param str bridge_ip: Optional Static IP Address of the Hue Bridge.
         :param wifi_manager wifi_manager: WiFiManager from ESPSPI_WiFiManager/ESPAT_WiFiManager
         """
         wifi_type = str(type(wifi_manager))
@@ -60,35 +59,47 @@ class Bridge:
             self._wifi = wifi_manager
         else:
             raise TypeError("This library requires a WiFiManager object.")
-        if bridge_ip is None:
-            # discover the bridge_ip if not provided
-            try:
-                response = self._wifi.get('https://discovery.meethue.com')
-                json_data = response.json()
-                bridge_ip = json_data[0]['internalipaddress']
-            except:
-                raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
+        if bridge_ip and username is not None:
+            self._bridge_url = 'http://{}/api'.format(bridge_ip)
+            self._username_url = self._bridge_url+'/'+ username
+        else:
+            self._bridge_ip = self.discover_bridge()
+            self._username = self.register_username()
+            raise AssertionError('ADD THESE VALUES TO SECRETS.PY: \
+                                 \n\t"bridge_ip":"{0}", \
+                                 \n\t"username":"{1}"'.format(self._bridge_ip, self._username))
+
+    def discover_bridge(self):
+        """Discovers Philips Hue Bridge IP from the hosted broker discovery service.
+        Returns the bridge's IP address.
+        """
+        try:
+            response = self._wifi.get('https://discovery.meethue.com')
+            json_data = response.json()
+            bridge_ip = json_data[0]['internalipaddress']
+        except:
+            raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
         self._ip = bridge_ip
         # set up hue web address path
         self.bridge_url = 'http://{}/api'.format(self._ip)
+        return self._ip
 
-    def register_username(self, username=None):
-        """Attempts to register Hue application username for use with your bridge.
+    def register_username(self):
+        """Attempts to register a Hue application username for use with your bridge.
         Provides a 30 second delay to press the link button on the bridge.
         Returns username or None.
-        :param str username: Unique application username, leave kwarg as None to generate.
         """
-        if username is not None:
-            self._username_url = self.bridge_url+'/'+ username
+        self._bridge_url = 'http://{}/api'.format(self._bridge_ip)
         data = {"devicetype":"CircuitPython#pyportal{0}".format(randint(0,100))}
-        resp = self._wifi.post(self.bridge_url,json=data)
+        resp = self._wifi.post(self._bridge_url,json=data)
         connection_attempts = 30
+        username = None
         while username == None and connection_attempts > 0:
-            resp = self._wifi.post(self.bridge_url, json=data)
+            resp = self._wifi.post(self._bridge_url, json=data)
             json = resp.json()[0]
             if json.get('success'):
                 username = str(json['success']['username'])
-                self._username_url = self.bridge_url+'/'+ username
+                self._username_url = self._bridge_url+'/'+ username
             connection_attempts-=1
             time.sleep(1)
         return username
