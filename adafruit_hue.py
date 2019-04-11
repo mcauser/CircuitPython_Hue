@@ -62,12 +62,6 @@ class Bridge:
         if bridge_ip and username is not None:
             self._bridge_url = 'http://{}/api'.format(bridge_ip)
             self._username_url = self._bridge_url+'/'+ username
-        else:
-            self._bridge_ip = self.discover_bridge()
-            self._username = self.register_username()
-            raise AssertionError('ADD THESE VALUES TO SECRETS.PY: \
-                                 \n\t"bridge_ip":"{0}", \
-                                 \n\t"username":"{1}"'.format(self._bridge_ip, self._username))
 
     # Hue Core API
     def discover_bridge(self):
@@ -84,7 +78,7 @@ class Bridge:
                              are both on the same WiFi network.')
         self._ip = bridge_ip
         # set up hue bridge address path
-        self.bridge_url = 'http://{}/api'.format(self._ip)
+        self._bridge_url = 'http://{}/api'.format(self._ip)
         return self._ip
 
     def register_username(self):
@@ -92,10 +86,10 @@ class Bridge:
         Provides a 30 second delay to press the link button on the bridge.
         Returns username or None.
         """
-        self._bridge_url = 'http://{}/api'.format(self._bridge_ip)
+        self._bridge_url = 'http://{}/api'.format(self._ip)
         data = {"devicetype":"CircuitPython#pyportal{0}".format(randint(0, 100))}
         resp = self._wifi.post(self._bridge_url, json=data)
-        connection_attempts = 30
+        connection_attempts = 1
         username = None
         while username is None and connection_attempts > 0:
             resp = self._wifi.post(self._bridge_url, json=data)
@@ -152,7 +146,7 @@ class Bridge:
         data = {'lights':lights,
                 'name':group_id,
                 'type':group_id
-               }
+                }
         resp = self._post(self._username_url+'/groups', data)
         return resp
 
