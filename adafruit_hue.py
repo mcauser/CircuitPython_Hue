@@ -68,24 +68,36 @@ class Bridge:
                 bridge_ip = json_data[0]['internalipaddress']
             except:
                 raise TypeError('Ensure the Philips Bridge and CircuitPython device are both on the same WiFi network.')
-        self._ip = bridge_ip
-        self._username = username
+        self._ip = str(bridge_ip)
+        self.username = username
         # set up hue web address path
         self._web_addr = bridge_ip+'/api'
         # set up hue username address path
-        self._username_addr = self._web_addr+'/'+self._username
+        self._username_addr = self._web_addr+'/'+self.username
         print(self._username_addr)
+        print(self._web_addr)
+        # Testing
+        url = 'http://{}/api'.format(bridge_ip)
+        print('test: ', url)
+        data = '{"devicetype":"TapLight#mydevice"}'
+        response = self._wifi.get(url+'/newdeveloper')
+        print(response.json())
 
 
     def register_application(self, username):
         """Registers Hue application for use with your bridge.
         :param str username: Unique alphanumeric username. Can not contain a space.
         """
-        #data = {"devicetype":"{0}#{1}".format(username, client_id)}
-        data = {"username":username,
-                "devicetype":"CircuitPython Hue Client"
-        }
-        resp = self._post(self._web_addr, data)
+        response = self._wifi.get(self._web_addr+'/newdeveloper')
+        print(response.json())
+
+        data = {"devicetype": "CircuitPython#pyportal"}
+        import json
+        data = json.dumps(data)
+        print('data:', data)
+        resp = self._wifi.get('http://192.168.1.21/api', json=data)
+        print(resp.status_code)
+        print(resp.text)
         # if it returns a 101 http response code...
         if resp.status_code == 101:
             raise ValueError('Press the link button on your bridge and run your code again...')
@@ -223,7 +235,7 @@ class Bridge:
         return resp_json
 
     """
-    HTTP Request and Response Helpers
+    HTTP Request and Response Helpers for the Hue API
     """
     # TODO: Add response parsing (_parse_resp) method....
 
